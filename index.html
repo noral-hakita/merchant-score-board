@@ -520,7 +520,7 @@
         
         <div class="loading" id="loading">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading merchant data from Google Sheets...</p>
+            <p>Loading merchant rankings...</p>
         </div>
         
         <div class="no-data" id="no-data" style="display: none;">
@@ -543,22 +543,22 @@
                     </tr>
                 </thead>
                 <tbody id="scoreboard-body">
-                    <!-- Data will be populated here from Google Sheets -->
+                    <!-- Data from webhook response -->
                 </tbody>
             </table>
             
             <div class="pagination" id="pagination">
-                <!-- Pagination will be generated here -->
+                <!-- Pagination -->
             </div>
         </div>
     </div>
 
     <script>
-        // Configuration
-        const n8nWebhookUrl = 'https://noral.gleeze.com/webhook/score-bord'; // UPDATE THIS
+        // Configuration - CHANGE THIS URL TO YOUR WEBHOOK
+        const WEBHOOK_URL = 'https://noral.gleeze.com/webhook/score-bord';
         const itemsPerPage = 10;
         
-        // State management
+        // State
         let currentCategory = '';
         let currentPage = 1;
         let allMerchants = [];
@@ -576,7 +576,7 @@
         const applyDateFilterBtn = document.getElementById('apply-date-filter');
         const resetDateFilterBtn = document.getElementById('reset-date-filter');
         
-        // Initialize date inputs
+        // Initialize date inputs (last 30 days)
         const today = new Date();
         const lastMonth = new Date();
         lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -608,91 +608,91 @@
             }
         }
         
-        // Load category data from n8n webhook
+        // Load category data via POST to webhook
         async function loadCategoryData() {
             if (!currentCategory) return;
             
             showLoading();
             
             try {
-                // Call n8n webhook to get data from Google Sheets
-                const response = await fetch(`${n8nWebhookUrl}?category=${currentCategory}`, {
-                    method: 'GET',
+                // Prepare POST request data
+                const requestData = {
+                    action: 'getMerchantsByCategory',
+                    category: currentCategory,
+                    requestTime: new Date().toISOString()
+                };
+                
+                // Send POST request to webhook
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify(requestData)
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
                 
                 const data = await response.json();
                 
-                // Process the data from Google Sheets
-                if (data && data.merchants) {
+                // Check if data exists
+                if (data && data.success && data.merchants && Array.isArray(data.merchants)) {
                     allMerchants = processMerchantData(data.merchants);
                     updateCategoryTitle();
                     applyFilters();
+                } else if (data && data.success && data.merchants === null) {
+                    // No data available
+                    allMerchants = [];
+                    showNoData('No merchants found in this category.');
                 } else {
-                    throw new Error('Invalid data format received');
+                    throw new Error('Invalid response format');
                 }
                 
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error loading data:', error);
                 showNoData('Error loading data. Please try again.');
                 
-                // For demo purposes, use sample data if webhook fails
-                // Remove this in production
-                useSampleData();
+                // Clear any existing data
+                allMerchants = [];
+                clearDisplay();
             }
         }
         
-        // Process merchant data from Google Sheets
+        // Process merchant data from webhook response
         function processMerchantData(merchantsData) {
+            if (!merchantsData || !Array.isArray(merchantsData)) {
+                return [];
+            }
+            
             return merchantsData.map(merchant => {
-                // Calculate scores from individual question scores
-                const totalScore = calculateTotalScore(merchant);
+                // Extract and calculate scores
+                const totalScore = parseInt(merchant.totalScore) || 
+                                   (parseInt(merchant.section1Score) || 0) +
+                                   (parseInt(merchant.section2Score) || 0) +
+                                   (parseInt(merchant.section3Score) || 0) +
+                                   (parseInt(merchant.section4Score) || 0) +
+                                   (parseInt(merchant.section5Score) || 0);
                 
                 return {
                     cnic: merchant.cnic || 'N/A',
-                    shopName: merchant.shopName || 'Unknown',
+                    shopName: merchant.shopName || 'Unknown Shop',
                     location: merchant.location || 'Not specified',
                     category: merchant.category || currentCategory,
-                    admaaRegistered: merchant.admaaRegistered === 'yes',
+                    admaaRegistered: merchant.admaaRegistered === true || merchant.admaaRegistered === 'yes',
                     totalScore: totalScore,
-                    section1Score: merchant.section1Score || 0,
-                    section2Score: merchant.section2Score || 0,
-                    section3Score: merchant.section3Score || 0,
-                    section4Score: merchant.section4Score || 0,
-                    section5Score: merchant.section5Score || 0,
+                    section1Score: parseInt(merchant.section1Score) || 0,
+                    section2Score: parseInt(merchant.section2Score) || 0,
+                    section3Score: parseInt(merchant.section3Score) || 0,
+                    section4Score: parseInt(merchant.section4Score) || 0,
+                    section5Score: parseInt(merchant.section5Score) || 0,
                     surveyDate: merchant.surveyDate || merchant.timestamp || new Date().toISOString().split('T')[0],
                     employeeId: merchant.employeeId || 'Unknown',
-                    lastUpdated: merchant.timestamp || new Date().toISOString()
+                    lastUpdated: merchant.lastUpdated || merchant.timestamp || new Date().toISOString()
                 };
             });
-        }
-        
-        // Calculate total score from individual questions
-        function calculateTotalScore(merchant) {
-            let total = 0;
-            
-            // Sum all question scores (q1 to q21)
-            for (let i = 1; i <= 21; i++) {
-                const score = parseInt(merchant[`q${i}`]) || 0;
-                total += score;
-            }
-            
-            // If total is 0, try section scores
-            if (total === 0) {
-                total = (parseInt(merchant.section1Score) || 0) +
-                       (parseInt(merchant.section2Score) || 0) +
-                       (parseInt(merchant.section3Score) || 0) +
-                       (parseInt(merchant.section4Score) || 0) +
-                       (parseInt(merchant.section5Score) || 0);
-            }
-            
-            return total;
         }
         
         // Apply filters (date and search)
@@ -833,11 +833,11 @@
                 const sectionScoresCell = document.createElement('td');
                 sectionScoresCell.innerHTML = `
                     <div class="section-scores">
-                        <span class="section-score">S1: ${merchant.section1Score || 0}/45</span>
-                        <span class="section-score">S2: ${merchant.section2Score || 0}/15</span>
-                        <span class="section-score">S3: ${merchant.section3Score || 0}/20</span>
-                        <span class="section-score">S4: ${merchant.section4Score || 0}/15</span>
-                        <span class="section-score">S5: ${merchant.section5Score || 0}/10</span>
+                        <span class="section-score">S1: ${merchant.section1Score}/45</span>
+                        <span class="section-score">S2: ${merchant.section2Score}/15</span>
+                        <span class="section-score">S3: ${merchant.section3Score}/20</span>
+                        <span class="section-score">S4: ${merchant.section4Score}/15</span>
+                        <span class="section-score">S5: ${merchant.section5Score}/10</span>
                     </div>
                 `;
                 
@@ -949,11 +949,11 @@
                     merchant.cnic,
                     merchant.admaaRegistered ? 'Yes' : 'No',
                     merchant.totalScore,
-                    merchant.section1Score || 0,
-                    merchant.section2Score || 0,
-                    merchant.section3Score || 0,
-                    merchant.section4Score || 0,
-                    merchant.section5Score || 0,
+                    merchant.section1Score,
+                    merchant.section2Score,
+                    merchant.section3Score,
+                    merchant.section4Score,
+                    merchant.section5Score,
                     merchant.surveyDate,
                     merchant.employeeId
                 ].join(','))
@@ -1014,66 +1014,27 @@
                 <h3>${message || 'No Data Available'}</h3>
                 <p>Try selecting a different category or adjusting your filters.</p>
             `;
+            
+            // Clear stats
+            document.getElementById('total-merchants').textContent = '0';
+            document.getElementById('avg-score').textContent = '0';
+            document.getElementById('top-score').textContent = '0';
+            document.getElementById('admaa-count').textContent = '0';
         }
         
-        // Sample data for demo (remove in production)
-        function useSampleData() {
-            console.log('Using sample data for demo');
-            
-            const categorySamples = {
-                pharmacy: generateSampleData('Pharmacy', 15),
-                grocery: generateSampleData('Grocery', 20),
-                electronics: generateSampleData('Electronics', 12),
-                clothing: generateSampleData('Clothing', 18),
-                restaurant: generateSampleData('Restaurant', 16),
-                hardware: generateSampleData('Hardware', 10),
-                other: generateSampleData('Other', 8)
-            };
-            
-            allMerchants = categorySamples[currentCategory] || [];
-            updateCategoryTitle();
-            applyFilters();
+        function clearDisplay() {
+            allMerchants = [];
+            filteredMerchants = [];
+            updateStats();
+            showNoData('No data available.');
         }
         
-        function generateSampleData(category, count) {
-            const merchants = [];
-            const locations = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'];
-            
-            for (let i = 1; i <= count; i++) {
-                const totalScore = Math.floor(Math.random() * 40) + 60; // 60-100 score
-                const section1 = Math.floor(Math.random() * 25) + 20; // 20-45
-                const section2 = Math.floor(Math.random() * 8) + 7; // 7-15
-                const section3 = Math.floor(Math.random() * 11) + 9; // 9-20
-                const section4 = Math.floor(Math.random() * 8) + 7; // 7-15
-                const section5 = Math.floor(Math.random() * 5) + 5; // 5-10
-                
-                merchants.push({
-                    cnic: `42201-${1000000 + i}-${i % 10}`,
-                    shopName: `${category} Store ${i}`,
-                    location: `${locations[i % locations.length]}, Area ${i}`,
-                    category: category.toLowerCase(),
-                    admaaRegistered: Math.random() > 0.3,
-                    totalScore: totalScore,
-                    section1Score: section1,
-                    section2Score: section2,
-                    section3Score: section3,
-                    section4Score: section4,
-                    section5Score: section5,
-                    surveyDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    employeeId: `ARS-EMP-${1000 + i}`,
-                    lastUpdated: new Date().toISOString()
-                });
-            }
-            
-            return merchants;
-        }
-        
-        // Auto-refresh every 5 minutes
+        // Auto-refresh every 2 minutes
         setInterval(() => {
             if (currentCategory) {
                 loadCategoryData();
             }
-        }, 5 * 60 * 1000);
+        }, 2 * 60 * 1000);
         
         // Initial load if category is already selected (e.g., from URL parameter)
         const urlParams = new URLSearchParams(window.location.search);
