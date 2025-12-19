@@ -15,7 +15,10 @@
         }
         
         body {
-            background-color: #ffffff;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: #333;
             line-height: 1.6;
             padding: 20px;
@@ -23,33 +26,69 @@
             margin: 0 auto;
         }
         
+        /* Set overlay to 0 opacity to show background.png fully */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0);
+            z-index: -1;
+        }
+        
         .header {
-            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            /* SHINY RED BACKGROUND */
+            background: linear-gradient(135deg, #ff3333 0%, #d32f2f 30%, #b71c1c 70%, #8b0000 100%);
             color: white;
             padding: 25px;
             border-radius: 12px;
             margin-bottom: 30px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1), 
+                        0 0 20px rgba(255, 50, 50, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4);
             text-align: center;
             border: 3px solid #388e3c;
             position: relative;
+        }
+        
+        /* Add subtle shine effect to header */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                        transparent 0%, 
+                        rgba(255, 255, 255, 0.6) 50%, 
+                        transparent 100%);
+            z-index: 2;
         }
         
         .logo-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 25px;
             margin-bottom: 15px;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
+            /* INCREASED LOGO SIZE */
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             overflow: hidden;
             border: 3px solid #ffcc00;
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+            transition: transform 0.3s ease;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
         }
         
         .logo img {
@@ -72,18 +111,21 @@
             font-size: 1rem;
             color: #ffcc00;
             font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         }
         
+        /* Box background set to 0 opacity */
         .navigation {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
-            background: white;
+            background: rgba(255, 255, 255, 0);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             border: 2px solid #d32f2f;
+            backdrop-filter: none;
         }
         
         .category-selector {
@@ -97,7 +139,7 @@
             border: 2px solid #388e3c;
             border-radius: 8px;
             font-size: 1rem;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.1); /* Transparent selector */
             transition: all 0.3s;
             color: #d32f2f;
             font-weight: 600;
@@ -130,13 +172,15 @@
             box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
         }
         
+        /* Main container background set to 0 opacity */
         .scoreboard-container {
-            background: white;
+            background: rgba(255, 255, 255, 0);
             border-radius: 12px;
             padding: 0;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             border: 3px solid #388e3c;
+            backdrop-filter: none;
         }
         
         .scoreboard-header {
@@ -181,10 +225,11 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            background: transparent;
         }
         
         thead {
-            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            background: linear-gradient(135deg, rgba(241, 248, 233, 0.2) 0%, rgba(232, 245, 233, 0.2) 100%);
         }
         
         th {
@@ -196,6 +241,7 @@
             position: sticky;
             top: 0;
             border-right: 1px solid #c8e6c9;
+            background: rgba(255, 255, 255, 0.1);
         }
         
         th:last-child {
@@ -206,7 +252,8 @@
             padding: 16px 12px;
             border-bottom: 2px solid #c8e6c9;
             cursor: pointer;
-            border-right: 1px solid #e8f5e9;
+            border-right: 1px solid rgba(232, 245, 233, 0.5);
+            background: rgba(255, 255, 255, 0); /* Cell transparency */
         }
         
         td:last-child {
@@ -214,21 +261,8 @@
         }
         
         tr {
-            background-image: url('background.png');
-            background-size: cover;
-            background-position: center;
+            background: transparent;
             position: relative;
-        }
-        
-        tr::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.85);
-            z-index: 1;
         }
         
         tr > * {
@@ -236,8 +270,8 @@
             z-index: 2;
         }
         
-        tr:hover::before {
-            background: rgba(241, 248, 233, 0.9);
+        tr:hover > * {
+            background: rgba(241, 248, 233, 0.1);
         }
         
         .rank {
@@ -281,7 +315,7 @@
         
         .progress-bar {
             height: 12px;
-            background: #e0e6e1;
+            background: rgba(224, 230, 225, 0.2);
             border-radius: 6px;
             overflow: hidden;
             margin-top: 5px;
@@ -302,7 +336,7 @@
             text-align: center;
             display: inline-block;
             border: 1px solid;
-            background: white !important;
+            background: rgba(255, 255, 255, 0.1) !important;
         }
         
         .category-grocery { color: #2e7d32; border-color: #2e7d32; }
@@ -317,6 +351,7 @@
             text-align: center;
             padding: 60px;
             color: #d32f2f;
+            background: transparent;
         }
         
         .loading i {
@@ -332,27 +367,16 @@
             border: 2px dashed #388e3c;
             margin: 20px;
             border-radius: 10px;
-            background-image: url('background.png');
-            background-size: cover;
-            background-position: center;
+            background: transparent;
             position: relative;
-        }
-        
-        .no-data::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(241, 248, 233, 0.9);
-            border-radius: 10px;
-            z-index: 1;
         }
         
         .no-data > * {
             position: relative;
             z-index: 2;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
         }
         
         .no-data i {
@@ -367,13 +391,13 @@
             gap: 10px;
             padding: 20px;
             border-top: 2px solid #c8e6c9;
-            background: #f9fdf8;
+            background: transparent;
         }
         
         .page-btn {
             padding: 8px 15px;
             border: 2px solid #388e3c;
-            background: white;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             cursor: pointer;
             color: #d32f2f;
@@ -382,7 +406,7 @@
         }
         
         .page-btn:hover {
-            background: #e8f5e9;
+            background: rgba(232, 245, 233, 0.2);
             border-color: #d32f2f;
         }
         
@@ -392,7 +416,7 @@
             border-color: #388e3c;
         }
         
-        /* Modal for merchant details */
+        /* Modal background set to transparent */
         .modal {
             display: none;
             position: fixed;
@@ -406,7 +430,7 @@
         }
         
         .modal-content {
-            background: white;
+            background: rgba(255, 255, 255, 0); 
             margin: 50px auto;
             padding: 0;
             width: 90%;
@@ -415,6 +439,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 3px solid #388e3c;
             overflow: hidden;
+            backdrop-filter: none;
         }
         
         .modal-header {
@@ -459,26 +484,17 @@
             padding: 30px;
             max-height: 70vh;
             overflow-y: auto;
-            background-image: url('background.png');
-            background-size: cover;
-            background-position: center;
+            background: transparent;
             position: relative;
-        }
-        
-        .modal-body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 1;
         }
         
         .modal-body > * {
             position: relative;
             z-index: 2;
+            background: rgba(255, 255, 255, 0);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
         
         .merchant-header {
@@ -506,6 +522,10 @@
         
         .merchant-score-large {
             text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #d32f2f;
         }
         
         .merchant-score-large .score-value {
@@ -538,7 +558,7 @@
         }
         
         .question-item {
-            background: #f9fdf8;
+            background: rgba(249, 253, 248, 0.1);
             padding: 15px;
             border-radius: 8px;
             border-left: 4px solid #d32f2f;
@@ -546,10 +566,11 @@
             border-top: 1px solid #c8e6c9;
             border-bottom: 1px solid #c8e6c9;
             transition: all 0.3s;
+            backdrop-filter: none;
         }
         
         .question-item:hover {
-            background: #f1f8e9;
+            background: rgba(241, 248, 233, 0.2);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
@@ -596,7 +617,7 @@
             display: inline-block;
             border: 1px solid;
             margin-top: 10px;
-            background: white;
+            background: rgba(255, 255, 255, 0.1);
         }
         
         .admaa-yes {
@@ -614,10 +635,20 @@
             color: #666;
             margin-top: 10px;
             padding: 8px;
-            background: #f1f8e9;
+            background: rgba(241, 248, 233, 0.1);
             border-radius: 6px;
             border: 1px solid #c8e6c9;
             display: inline-block;
+        }
+        
+        .shop-name,
+        .location,
+        .question-text,
+        .merchant-basic-info h3,
+        .merchant-basic-info p,
+        .question-details h4,
+        .rating-value {
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
         
         @media (max-width: 768px) {
@@ -648,6 +679,12 @@
             table {
                 font-size: 0.9rem;
             }
+            
+            /* Adjust logo size for mobile */
+            .logo {
+                width: 80px;
+                height: 80px;
+            }
         }
     </style>
 </head>
@@ -655,16 +692,19 @@
     <div class="header">
         <div class="logo-container">
             <div class="logo">
+                <!-- INCREASED LOGO SIZE -->
                 <img src="admaa.png" alt="ADMAA Logo">
             </div>
             <div>
-                <img src="admaalogo.png" alt="ADMAA Retail Enablement Services" style="height: 60px;">
+                <!-- INCREASED LOGO SIZE -->
+                <img src="admaalogo.png" alt="ADMAA Retail Enablement Services" style="height: 75px; filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.5));">
             </div>
         </div>
         <h1>Merchant Ranking Scoreboard</h1>
         <p>View rankings by category</p>
     </div>
     
+    <!-- Rest of the HTML remains exactly the same -->
     <div class="navigation">
         <div class="category-selector">
             <select id="category-select">
@@ -718,17 +758,14 @@
                     </tr>
                 </thead>
                 <tbody id="scoreboard-body">
-                    <!-- Data from webhook response -->
-                </tbody>
+                    </tbody>
             </table>
             
             <div class="pagination" id="pagination">
-                <!-- Pagination -->
-            </div>
+                </div>
         </div>
     </div>
     
-    <!-- Merchant Details Modal -->
     <div class="modal" id="merchant-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -741,13 +778,11 @@
                 </button>
             </div>
             <div class="modal-body" id="modal-body">
-                <!-- Merchant details will be loaded here -->
-            </div>
+                </div>
         </div>
     </div>
 
     <script>
-        // Same JavaScript as before, just making sure all 21 questions are included
         const WEBHOOK_URL = 'https://noral.gleeze.com/webhook/score-bord';
         const itemsPerPage = 10;
         
